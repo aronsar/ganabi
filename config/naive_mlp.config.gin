@@ -1,0 +1,40 @@
+import train
+import modes.naive_mlp
+import create_load_data
+
+
+# Parameters Configuration
+# ==============================================================================
+create_load_data.DataLoader.num_players = 2
+create_load_data.DataLoader.num_games = 150
+
+
+# Parameters for TrainConfig
+# ==============================================================================
+train.TrainConfig.optimizer = @keras.optimizers.Adam()
+Adam.lr = 0.0001
+Adam.beta_1 = 0.9
+Adam.beta_2 = 0.999
+Adam.epsilon = None
+Adam.decay = 0.0
+Adam.amsgrad = False
+
+train.TrainConfig.loss = @keras.losses.categorical_crossentropy
+train.TrainConfig.metrics = ['accuracy']
+# train.Trainer.metrics = {'output_a': 'accuracy'} # for multi-output model
+train.TrainConfig.batch_size = 32
+train.TrainConfig.epochs = 10
+
+# Parameters build_model
+# ==============================================================================
+
+
+# Parameters for DataGenerator
+# ==============================================================================
+modes.naive_mlp.DataGenerator.cfg = {
+    "batch_size": 32,
+    "verbose": True, # Turn to True only when debugging for subclass datagenerator
+    "shuffle": True,
+    "obs_dim": 658,
+    "act_dim": 20,
+}
