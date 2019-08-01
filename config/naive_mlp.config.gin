@@ -1,9 +1,15 @@
 import train
 import modes.naive_mlp
 import create_load_data
+import run_experiment
+
+# Parameters for RunConfig
+# ==============================================================================
+__main__.RunConfig.mode = "naive_mlp"
+__main__.RunConfig.agents_to_use = ["iggi"]
 
 
-# Parameters Configuration
+# Parameters for DataLoader
 # ==============================================================================
 create_load_data.DataLoader.num_players = 2
 create_load_data.DataLoader.num_games = 150
@@ -25,7 +31,7 @@ train.TrainConfig.metrics = ['accuracy']
 train.TrainConfig.batch_size = 32
 train.TrainConfig.epochs = 10
 
-# Parameters build_model
+# Parameters for build_model
 # ==============================================================================
 
 

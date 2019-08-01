@@ -11,8 +11,8 @@ def parse():
 
     parser.add_argument(
         '--config_path',
-        help='gin config file path',
-        required=True)
+        help='gin config file path'
+    )
 
     parser.add_argument(
         '--data_dir',
@@ -35,8 +35,8 @@ def parse():
              '    walton-rivers (not yet)\n' \
              '    etc...')
 
-    parser.add_argument('--checkpoint_path')
-
+    parser.add_argument('--run_dir')
+    parser.add_argument('--checkpoint_dir')
     parser.add_argument('--results_dir')
 
     parser.add_argument(
@@ -53,7 +53,6 @@ def parse():
              "next available number.")
 
     args = parser.parse_args()
-
     args = resolve_run_directory(args)
 
     return args
