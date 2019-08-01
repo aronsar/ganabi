@@ -101,7 +101,6 @@ class DataLoader(object):
     def __init__(self,
                  num_players=2,
                  num_games=10):
-
         self.num_players = num_players
         self.num_games = num_games
 

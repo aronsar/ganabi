@@ -18,10 +18,3 @@ def save_git_hash(args):
 def evaluate_model(data, model, args):
     save_gin_config(args)
     save_git_hash(args)
-
-
-if __name__ == "__main__":
-    args = parse_args.parse()
-    data_reader = create_data.main(args)
-    model = train.main(data_reader, args)
-    main(model, data_reader, args)
