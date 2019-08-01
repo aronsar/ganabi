@@ -41,12 +41,14 @@ class RunConfig(object):
 
 def main():
     args = parse()
+    config_path = args.config_path
 
     gin.external_configurable(keras.optimizers.Adam, module='keras.optimizers')
     gin.external_configurable(keras.losses.categorical_crossentropy, module='keras.losses')
-    gin.parse_config_file(args.config_path)
+    gin.parse_config_file(config_path)
 
-    args = RunConfig()
+    # args = RunConfig()
+    # args.config_path = config_path
 
     data = create_load_data(args)
 
