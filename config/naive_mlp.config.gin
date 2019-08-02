@@ -12,7 +12,7 @@ __main__.RunConfig.agents_to_use = ["iggi"]
 # Parameters for DataLoader
 # ==============================================================================
 create_load_data.DataLoader.num_players = 2
-create_load_data.DataLoader.num_games = 150
+create_load_data.DataLoader.num_games = 10
 
 
 # Parameters for TrainConfig
