@@ -1,4 +1,3 @@
-.DS_Store
 CMakeCache.txt
 Makefile
 cmake_install.cmake
@@ -9,6 +8,8 @@ CMakeFiles
 *.pyc
 data
 output
+.DS_Store
+.java-version
 
 # Add by James for walton agents
 */walton_rivers_agents/results
