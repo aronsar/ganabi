@@ -36,7 +36,7 @@ def parse():
              '    etc...')
 
     parser.add_argument('--run_dir')
-    parser.add_argument('--checkpoint_dir')
+    parser.add_argument('--checkpoints_dir')
     parser.add_argument('--results_dir')
 
     parser.add_argument(
@@ -63,9 +63,9 @@ def resolve_run_directory(args):
         new_run_id = get_new_run_id(args.output_dir)
         os.mkdir(os.path.join(args.output_dir, 'run%03d' % new_run_id))
         args.run_dir = os.path.join(args.output_dir, 'run%03d' % new_run_id)
-        args.checkpoint_dir = os.path.join(args.output_dir, 'run%03d' % new_run_id, 'checkpoints/')
+        args.checkpoints_dir = os.path.join(args.output_dir, 'run%03d' % new_run_id, 'checkpoints/')
         args.results_dir = os.path.join(args.output_dir, 'run%03d' % new_run_id, 'results/')
-        os.mkdir(args.checkpoint_dir)
+        os.mkdir(args.checkpoints_dir)
         os.mkdir(args.results_dir)
         # TODO: copy over gin config file
         # TODO: save git commit hash in result directory as well
