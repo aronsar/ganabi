@@ -36,7 +36,7 @@ def one_hot_vectorized_action(agent, num_moves, obs):
     return one_hot_action_vector, action
 
 class DataCreator(object):
-    def __init__(self):
+    def __init__(self, num_games):
         config = {'colors': 5,
           'ranks': 5,
           'players': 2,
@@ -47,13 +47,18 @@ class DataCreator(object):
           'observation_type': 1,  # FIXME: NEEDS CONFIRMATION
           'random_start_player': False}
         self.num_players = 2
+        self.num_games = num_games
         self.environment = rl_env.HanabiEnv(config)
-        self.agent_object = import_agents('ex.h5')
+        self.agent_object = []
+        self.agent_object.append(import_agents('ex.h5'))
+        self.agent_object.append(import_agents('ex.h5'))
+        # self.agent_object_1 = import_agents('ex.h5')
 
+# I should call it run_game
     def create_data(self):
         raw_data = []
 
-        for game_num in range(self.num_players):
+        for game_num in range(self.num_games):
             raw_data.append([[],[]])
             observations = self.environment.reset()
             game_done = False
@@ -62,12 +67,12 @@ class DataCreator(object):
                 for agent_id in range(self.num_players):
                     observation = observations['player_observations'][agent_id]
                     one_hot_action_vector, action = one_hot_vectorized_action(
-                            self.agent_object,
+                            self.agent_object[agent_id],
                             self.environment.num_moves(),
                             observation)
-                    raw_data[game_num][0].append(
-                            observation['vectorized'])
-                    raw_data[game_num][1].append(one_hot_action_vector)
+                    # raw_data[game_num][0].append(
+                    #         observation['vectorized'])
+                    # raw_data[game_num][1].append(one_hot_action_vector)
 
                     if observation['current_player'] == agent_id:
                         assert action is not None
@@ -78,14 +83,19 @@ class DataCreator(object):
                     observations, _, game_done, _ = self.environment.step(
                             current_player_action)
                     if game_done:
+                        print("score of ")
+                        print(self.environment.state.score())
                         break
+
+
 
         return raw_data
 
 def main():
-    data_creator = DataCreator()
+
+    data_creator = DataCreator(10)
     rainbow_data = data_creator.create_data()
-    print(rainbow_data)
+    # print(rainbow_data)
     # pickle.dump(rainbow_data, open(args.datapath, "wb"))
 
 if __name__ == '__main__':
