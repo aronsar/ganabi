@@ -1,7 +1,3 @@
-# this script creates data using python 2 and rainbow agents
-
-# here we add the repo's root directory to the path variable; everything
-# is imported relative to that to avoid problems
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
@@ -19,16 +15,6 @@ def import_agents(agent_path):
     return model.Agent(agent_path)
 
 def one_hot_vectorized_action(agent, num_moves, obs):
-    '''
-    Inputs:
-        agent: agent object we imported and initialized with agent_config
-        num_moves: length of the action vector
-        obs: observation object (has lots of good info, run print(obs.keys()) to see)
-    Returns:
-        one_hot_action_vector: one hot action vector
-        action: action in the form recognizable by the Hanabi environment
-                (idk something like {'discard': 5})
-    '''
     action, action_idx = agent.act(obs,num_moves)
     one_hot_action_vector = [0]*num_moves
     one_hot_action_vector[action_idx] = 1
@@ -36,7 +22,7 @@ def one_hot_vectorized_action(agent, num_moves, obs):
     return one_hot_action_vector, action
 
 class DataCreator(object):
-    def __init__(self, num_games):
+    def __init__(self, num_games, path_model_0, path_model_1 ):
         config = {'colors': 5,
           'ranks': 5,
           'players': 2,
@@ -50,14 +36,12 @@ class DataCreator(object):
         self.num_games = num_games
         self.environment = rl_env.HanabiEnv(config)
         self.agent_object = []
-        self.agent_object.append(import_agents('ex.h5'))
-        self.agent_object.append(import_agents('ex.h5'))
-        # self.agent_object_1 = import_agents('ex.h5')
+        self.agent_object.append(import_agents(path_model_0))
+        self.agent_object.append(import_agents(path_model_1))
 
-# I should call it run_game
     def create_data(self):
         raw_data = []
-
+        scores = []
         for game_num in range(self.num_games):
             raw_data.append([[],[]])
             observations = self.environment.reset()
@@ -70,10 +54,6 @@ class DataCreator(object):
                             self.agent_object[agent_id],
                             self.environment.num_moves(),
                             observation)
-                    # raw_data[game_num][0].append(
-                    #         observation['vectorized'])
-                    # raw_data[game_num][1].append(one_hot_action_vector)
-
                     if observation['current_player'] == agent_id:
                         assert action is not None
                         current_player_action = action
@@ -83,20 +63,13 @@ class DataCreator(object):
                     observations, _, game_done, _ = self.environment.step(
                             current_player_action)
                     if game_done:
-                        print("score of ")
-                        print(self.environment.state.score())
+                        scores.append(self.environment.state.score())
                         break
-
-
-
-        return raw_data
+        return scores
 
 def main():
-
-    data_creator = DataCreator(10)
+    data_creator = DataCreator(10, 'ex.h5', 'ex.h5')
     rainbow_data = data_creator.create_data()
-    # print(rainbow_data)
-    # pickle.dump(rainbow_data, open(args.datapath, "wb"))
 
 if __name__ == '__main__':
     main()
