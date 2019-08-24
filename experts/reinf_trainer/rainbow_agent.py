@@ -31,15 +31,57 @@ from experts.reinf_trainer import prioritized_replay_memory
 import gin.tf
 import numpy as np
 import tensorflow as tf
+from experts.reinf_trainer.mlp import Mlp
+from tensorflow.keras.layers import ReLU, Softmax
+
+hypers = {'lr': 0.00015,
+          'batch_size': 512,
+          'hl_activations': [ReLU, ReLU, ReLU],
+          'hl_sizes': [1024, 512, 256],
+          'decay': 0.,
+          'bNorm': False,
+          'dropout': True,
+          'regularizer': None}
+
+class PretrainedWeights(tf.keras.initializers.Initializer):
+    def __init__(self, modelpath):
+        m = Mlp(
+                io_sizes=(658, 20),
+                out_activation=Softmax, 
+                loss='categorical_crossentropy',
+                metrics=['accuracy'], 
+                **hypers)       
+        m.construct_model()
+        import pdb; pdb.set_trace()
+        self.all_weights = np.asarray(m.model.load_weights(modelpath),
+                                      dtype=np.float32)
+        self.weight_idx = 0
+        self.num_atoms = 0
+
+    def __call__(self, shape, dtype=None, partition_info=None):
+        weight_idx = self.weight_idx
+        import pdb; pdb.set_trace()
+        next_shape = np.shape(self.all_weights[weight_idx])
+        
+        if shape != next_shape:
+            raise ValueError('Mismatch between shape of ' + modelpath + \
+                             ' and hardcoded model at weight_idx ' \
+                             + str(self.weight_idx))
+        
+        self.weight_idx += 1
+        
+        if self.num_atoms > 0:
+            return np.tile(self.all_weights[weight_idx], [self.num_atoms, 1])
+        else:
+            return self.all_weights[weight_idx]
 
 
 slim = tf.contrib.slim
 
-
 @gin.configurable
 def rainbow_template(state,
                      num_actions,
-                     num_atoms=51,
+                     num_atoms=1,
                      layer_size=512,
                      num_layers=2): # FIXME: Aron 3/14/19: changed from 1 to 2
   r"""Builds a Rainbow Network mapping states to value distributions.
@@ -47,7 +89,9 @@ def rainbow_template(state,
   Args:
     state: A `tf.placeholder` for the RL state.
     num_actions: int, number of actions that the RL agent can take.
+  import pdb; pdb.set_trace()
     num_atoms: int, number of atoms to approximate the distribution with.
+  import pdb; pdb.set_trace()
     layer_size: int, number of hidden units per layer.
     num_layers: int, number of hidden layers.
 
@@ -56,6 +100,34 @@ def rainbow_template(state,
       `\theta : \mathcal{X}\rightarrow\mathbb{R}^{|\mathcal{A}| \times N}`,
       where `N` is num_atoms.
   """
+  # initializing the weight initializer
+  init = PretrainedWeights('./rainbow_best_818.h5')
+
+  # model definition
+  net = tf.cast(state, tf.float32)
+  net = tf.squeeze(net, axis=2)
+
+  for hl_size, act_fn in zip(hypers['hl_sizes'], hypers['hl_activations']):
+    net = slim.fully_connected(net, hl_size, activation_fn=act_fn,
+                               weights_initializer=init,
+                               biases_initializer=init)
+    if hypers['dropout']:
+      net = slim.dropout(net, keep_prob=.5)
+
+  init.num_atoms = 51 # tile weights by num_atoms
+  net = slim.fully_connected(net, num_actions * num_atoms, actiavtion_fn=None,
+                             weights_initilizer=init,
+                             biases_initializer=init)
+
+  net = tf.reshape(net, [-1, num_atoms, num_actions])
+  net = tf.transpose(net, perm=[0, 2, 1])
+  return net
+
+  # what we've done here is initialize the network's weights with the
+  # pretrained values, and also we've tiled the last weight matrix num_atoms
+  # times to produce a network with the correct dimensions
+
+  '''
   weights_initializer = slim.variance_scaling_initializer(
       factor=1.0 / np.sqrt(3.0), mode='FAN_IN', uniform=True)
 
@@ -69,6 +141,8 @@ def rainbow_template(state,
                              weights_initializer=weights_initializer)
   net = tf.reshape(net, [-1, num_actions, num_atoms])
   return net
+  '''
+
 
 
 @gin.configurable
@@ -80,7 +154,7 @@ class RainbowAgent(dqn_agent.DQNAgent):
                num_actions=None,
                observation_size=None,
                num_players=None,
-               num_atoms=51,
+               num_atoms=1,
                vmax=25.,
                gamma=0.99,
                update_horizon=1,
@@ -293,7 +367,7 @@ def project_distribution(supports, weights, target_support,
   """
   target_support_deltas = target_support[1:] - target_support[:-1]
   # delta_z = `\Delta z` in Eq7.
-  delta_z = target_support_deltas[0]
+  delta_z = target_support_deltas#[0]
   validate_deps = []
   supports.shape.assert_is_compatible_with(weights.shape)
   supports[0].shape.assert_is_compatible_with(target_support.shape)

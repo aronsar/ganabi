@@ -31,6 +31,8 @@ import sys
 sys.path.append('/home/aronsar/ganabi')
 from experts.reinf_trainer.third_party.dopamine import logger
 import experts.reinf_trainer.run_experiment as run_experiment
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 FLAGS = flags.FLAGS
 
