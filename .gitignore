@@ -8,7 +8,9 @@ cmake_install.cmake
 *.a
 *.o
 *.dylib
+*.csv
 experts/WTFWT/target
+agent_model/mypython
 .java-version
 .idea/
 *.vscode/*
