@@ -44,7 +44,8 @@ hypers = {'lr': 0.00015,
           'regularizer': None}
 
 class PretrainedWeights(tf.keras.initializers.Initializer):
-    def __init__(self, modelpath):
+    def __init__(self, modelpath, mode):
+        self.modelpath = modelpath
         m = Mlp(
                 io_sizes=(658, 20),
                 out_activation=Softmax, 
@@ -52,28 +53,34 @@ class PretrainedWeights(tf.keras.initializers.Initializer):
                 metrics=['accuracy'], 
                 **hypers)       
         m.construct_model()
-        import pdb; pdb.set_trace()
-        self.all_weights = np.asarray(m.model.load_weights(modelpath),
-                                      dtype=np.float32)
-        self.weight_idx = 0
+        m.model.load_weights(self.modelpath)
+        self.all_weights = m.model.get_weights()
+        if mode is "weights":
+            self.all_weights = [self.all_weights[i] for i in [0,2,4,6]]
+        elif mode is "biases":
+            self.all_weights = [self.all_weights[i] for i in [1,3,5,7]]
+        else:
+            raise ValueError('mode must be "weights" or "biases"')
+
+        self.weight_idx = -1
         self.num_atoms = 0
 
     def __call__(self, shape, dtype=None, partition_info=None):
-        weight_idx = self.weight_idx
-        import pdb; pdb.set_trace()
-        next_shape = np.shape(self.all_weights[weight_idx])
+        self.weight_idx += 1
+        next_shape = np.shape(self.all_weights[self.weight_idx])
         
-        if shape != next_shape:
-            raise ValueError('Mismatch between shape of ' + modelpath + \
+        if (np.asarray(shape) != np.asarray(next_shape)).all():
+            raise ValueError('Mismatch between shape of ' \
+                             + self.modelpath + \
                              ' and hardcoded model at weight_idx ' \
                              + str(self.weight_idx))
         
-        self.weight_idx += 1
-        
+        import pdb; pdb.set_trace()
         if self.num_atoms > 0:
-            return np.tile(self.all_weights[weight_idx], [self.num_atoms, 1])
+            return tf.initializers.constant(np.tile(self.all_weights[self.weight_idx],
+                           [self.num_atoms, 1]))
         else:
-            return self.all_weights[weight_idx]
+            return tf.initializers.constant(self.all_weights[self.weight_idx])
 
 
 slim = tf.contrib.slim
@@ -101,16 +108,18 @@ def rainbow_template(state,
       where `N` is num_atoms.
   """
   # initializing the weight initializer
-  init = PretrainedWeights('./rainbow_best_818.h5')
+  weight_init = PretrainedWeights('./rainbow_best_818.h5', "weights")
+  bias_init = PretrainedWeights('./rainbow_best_818.h5', "biases")
 
   # model definition
   net = tf.cast(state, tf.float32)
   net = tf.squeeze(net, axis=2)
 
   for hl_size, act_fn in zip(hypers['hl_sizes'], hypers['hl_activations']):
+    import pdb; pdb.set_trace()
     net = slim.fully_connected(net, hl_size, activation_fn=act_fn,
-                               weights_initializer=init,
-                               biases_initializer=init)
+                               weights_initializer=weight_init,
+                               biases_initializer=bias_init)
     if hypers['dropout']:
       net = slim.dropout(net, keep_prob=.5)
 
