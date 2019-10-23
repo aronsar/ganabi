@@ -149,22 +149,28 @@ class NewGanabiModel(tk.Model):
         super().__init__()
 
         self.model_name = model_name
-        self.act_fn = act_fn
         self.bNorm = bNorm
         self.dropout_rate = dropout_rate
 
         model_layers = []
         for i, h_size in enumerate(hidden_sizes):
+            # Dense
             layer = tk.layers.Dense(h_size,
-                                    activation=act_fn,
+                                    activation=None,
                                     name="{}-dense-{}".format(self.model_name, i))
             model_layers.append(layer)
 
+            # BNorm
             if self.bNorm:
                 bn_layer = tk.layers.BatchNormalization(
                     name="{}-bn-{}".format(self.model_name, i))
                 model_layers.append(bn_layer)
 
+            # Activation
+            act_layer = self.get_act_fn(act_fn, i)
+            model_layers.append(act_layer)
+
+            # Dropout
             if self.dropout_rate > 0.0:
                 dropout_layer = tk.layers.Dropout(
                     rate=self.dropout_rate,
@@ -174,11 +180,24 @@ class NewGanabiModel(tk.Model):
         self.model_layers = model_layers
         self.out = tk.layers.Dense(output_shape, activation='softmax')
 
+    def get_act_fn(self, act, i):
+        if act == 'relu':
+            return tk.layers.ReLU(name="{}-act-{}".format(self.model_name, i))
+        elif act == 'prelu':
+            return tk.layers.PReLU(name="{}-act-{}".format(self.model_name, i))
+        elif act == 'lrelu':
+            return tk.layers.LeakyReLU(name="{}-act-{}".format(self.model_name, i))
+        elif act == 'tanh':
+            return tk.activations.tanh
+        elif act == 'sigmoid':
+            return tk.activations.sigmoid
+        else:
+            raise("Unknown Activation Function type {}".format(act))
+
     def call(self, x):
         return self.forward(x)
 
     def forward(self, x):
-
         for i in range(len(self.model_layers)):
             x = self.model_layers[i](x)
 

@@ -75,6 +75,13 @@ class MAML(object):
         self.summary_writer = tf.summary.create_file_writer(self.log_dir)
 
     def init_tk_params(self):
+        self.task_lr_schedule = tk.optimizers.schedules.ExponentialDecay(
+            self.task_lr,  # initial_lr
+            decay_steps=self.patience,
+            decay_rate=self.reduce_lr_rate,
+            staircase=True
+        )
+
         self.meta_lr_schedule = tk.optimizers.schedules.ExponentialDecay(
             self.meta_lr,  # initial_lr
             decay_steps=self.patience,
@@ -83,7 +90,8 @@ class MAML(object):
         )
 
         self.task_loss_op = tk.losses.SparseCategoricalCrossentropy()
-        self.task_optimizer = tk.optimizers.SGD(self.task_lr, clipvalue=10)
+        self.task_optimizer = tk.optimizers.SGD(
+            self.task_lr_schedule, clipvalue=10)
         self.task_train_loss = tk.metrics.Mean(name='task_train_loss')
         self.task_train_accuracy = tk.metrics.SparseCategoricalAccuracy(
             name='task_train_accuracy')
@@ -245,7 +253,14 @@ class MAML(object):
         meta_grads = self.train_meta(tasks_gradients)
 
         # Record Metrics
-        _, _ = self.record_metrics(step, is_train=True)
+
+        if step % (self.num_verbose_interval / 5) == 0:
+            train_loss, train_acc = self.record_metrics(step, is_train=True)
+
+            # Print and Log
+            template = 'Train  : Iteration {}, Loss: {:.3f}, Accuracy: {:.3f}'
+            print(template.format(step, train_loss, train_acc))
+            self.logger.warning(template.format(step, train_loss, train_acc))
 
     def eval_step(self, eval_batch, step):
         # Reset Weights
@@ -263,6 +278,12 @@ class MAML(object):
 
         # Record Metrics
         eval_loss, eval_acc = self.record_metrics(step, is_train=False)
+
+        # Print and Log
+        template = 'Test  : Iteration {}, Loss: {:.3f}, Accuracy: {:.3f}'
+        print(template.format(step, eval_loss, eval_acc))
+        self.logger.warning(template.format(step, eval_loss, eval_acc))
+
         return eval_loss, eval_acc
 
     def record_metrics(self, meta_step, is_train=True):
@@ -333,9 +354,9 @@ class MAML(object):
                         self.save_path + "/{}-weights.h5".format(meta_step))
 
                 # Print
-                template = 'Meta  : Iteration {}, Loss: {:.3f}, Accuracy: {:.3f}, Time: {:.3f}'
-                print(template.format(meta_step, eval_loss, eval_acc,
+                template = 'Time to finish {} Meta Updates: {:.3f}'
+                print(template.format(self.num_verbose_interval,
                                       (time.time() - start_time)))
-                self.logger.warning(template.format(meta_step, eval_loss, eval_acc,
+                self.logger.warning(template.format(self.num_verbose_interval,
                                                     (time.time() - start_time)))
                 start_time = time.time()

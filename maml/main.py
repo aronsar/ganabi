@@ -67,9 +67,9 @@ def train_ganabi():
     config_obj = TrainConfig()
     # config = config_obj.get_config()
 
-    data_generator = DataGenerator(config_obj)
     maml = MAML(config_obj)
     maml.save_gin_config(config_file)
+    data_generator = DataGenerator(config_obj)
     maml.train_manager(data_generator)
 
 # Demo Metrics at ~/Coding/ganabi/james_ganabi/maml/logs/DeleteMe-20191014-000256/20191014-000256
