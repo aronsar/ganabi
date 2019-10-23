@@ -111,13 +111,13 @@ class MAML(object):
 
         # Build models
         if self.dataset == 'omniglot':
-            self.model = models.SimpleModel(self.num_classes)
-            self.task_models = [models.SimpleModel(self.num_classes)
+            self.model = models.SimpleOmniglotModel(self.num_classes)
+            self.task_models = [models.SimpleOmniglotModel(self.num_classes)
                                 for _ in range(self.num_tasks)]
             input_dim = (self.num_classes, 28, 28, 1)
         elif self.dataset == 'ganabi':
-            self.model = models.NewGanabiModel(model_name="Meta")
-            self.task_models = [models.NewGanabiModel(model_name="Task{}".format(i))
+            self.model = models.GanabiModel(model_name="Meta")
+            self.task_models = [models.GanabiModel(model_name="Task{}".format(i))
                                 for i in range(self.num_tasks)]
             input_dim = (1, 658)
         else:
