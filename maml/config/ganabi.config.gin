@@ -27,8 +27,8 @@ TrainConfig.TrainConfig.num_verbose_interval = 100
 TrainConfig.TrainConfig.obs_dim = 658
 TrainConfig.TrainConfig.act_dim = 20
 
-models.NewGanabiModel.hidden_sizes = [2048,2048,1024,1024,512,512,256,256,128,128,64,64]
-models.NewGanabiModel.output_shape = 20
-models.NewGanabiModel.act_fn = 'lrelu'
-models.NewGanabiModel.bNorm = True
-models.NewGanabiModel.dropout_rate = 0.0
+models.GanabiModel.hidden_sizes = [2048,2048,1024,1024,512,512,256,256,128,128,64,64]
+models.GanabiModel.output_shape = 20
+models.GanabiModel.act_fn = 'lrelu'
+models.GanabiModel.bNorm = True
+models.GanabiModel.dropout_rate = 0.0
