@@ -53,8 +53,8 @@ class MAML(object):
         self.test_agent = config_obj.get("test_agent")
 
         self.init_tk_params()
-        self.init_tensorboard_params()
         self.init_models()
+        self.init_tensorboard_params()
 
         # Logger
         formatter = logging.Formatter('%(message)s')
@@ -75,10 +75,15 @@ class MAML(object):
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         self.base_dir = 'result/{}/{}/'.format(self.test_agent, current_time)
         self.log_dir = self.base_dir + 'logs/'
-        self.save_path = self.base_dir + 'ckpt/'
+        self.ckpt_dir = self.base_dir + 'ckpt/'
+        self.save_path = self.base_dir + 'weights/'
         if not os.path.isdir(self.save_path):
             os.makedirs(self.save_path, exist_ok=True)
         self.summary_writer = tf.summary.create_file_writer(self.log_dir)
+        self.checkpoint = tf.train.Checkpoint(
+            optimizer=self.meta_optimizer, model=self.model)
+        self.ckpt_manager = tf.train.CheckpointManager(
+            self.checkpoint, directory=self.ckpt_dir, max_to_keep=5)
 
     def init_tk_params(self):
         self.task_lr_schedule = tk.optimizers.schedules.ExponentialDecay(
@@ -433,6 +438,7 @@ class MAML(object):
                     self.best_eval_acc = eval_acc
                     self.model.save_weights(
                         self.save_path + "/{}-weights.h5".format(meta_step))
+                    self.ckpt_manager.save()
 
                 # Print
                 template = 'Time to finish {:>4d} Meta Updates: {:>7.3f}'
