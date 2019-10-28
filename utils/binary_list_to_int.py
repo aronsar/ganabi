@@ -8,6 +8,7 @@ def convert(bin_list):
     """
     return sum(x << i for i, x in enumerate(reversed(bin_list)))
 
+
 def revert(x, length):
     """ Revert an integer back to a binary list.
     Arguments:
