@@ -12,7 +12,7 @@ TrainConfig.TrainConfig.test_support = 10
 TrainConfig.TrainConfig.test_query = 10
 TrainConfig.TrainConfig.batch_size = 64
 TrainConfig.TrainConfig.shuffle = True
-TrainConfig.TrainConfig.preprocess = False
+TrainConfig.TrainConfig.preprocess = True
 
 
 TrainConfig.TrainConfig.num_meta_train = 50000

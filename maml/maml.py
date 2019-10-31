@@ -436,9 +436,14 @@ class MAML(object):
                 # Save model
                 if self.best_eval_acc < eval_acc:
                     self.best_eval_acc = eval_acc
+                    self.ckpt_manager.save()
                     self.model.save_weights(
                         self.save_path + "/{}-weights.h5".format(meta_step))
-                    self.ckpt_manager.save()
+                else:
+                    if meta_step % 10000 == 0:
+                        self.ckpt_manager.save()
+                        self.model.save_weights(
+                            self.save_path + "/{}-weights.h5".format(meta_step))
 
                 # Print
                 template = 'Time to finish {:>4d} Meta Updates: {:>7.3f}'
