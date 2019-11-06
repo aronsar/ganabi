@@ -222,17 +222,10 @@ class Dataset(object):
         self.test_support = config_obj.get("test_support")
         self.test_query = config_obj.get("test_query")
         self.shuffle = config_obj.get("shuffle")
-        self.preprocess = config_obj.get("preprocess")
+        self.preprocess = config_obj.get("data_preprocess")
         self.task_num = config_obj.get("num_tasks")
+        self.agent_path = config_obj.get("data_path")
 
-        if self.preprocess:
-            self.agent_path = os.path.join(
-                config_obj.get("data_dir"), 'ganabi/new_train')
-        else:
-            self.agent_path = os.path.join(
-                config_obj.get('data_dir'), 'ganabi/train')
-
-        # Define multi-process function name, can be reused
         self.mp_func = read_pkl
 
         self.all_agent_names = os.listdir(self.agent_path)
@@ -245,11 +238,6 @@ class Dataset(object):
         self.generators = self._read_agent_data(self.all_agent_names)
         self.generators[self.test_agent_index].set_params_for_test_agent(
             self.test_support, self.test_query)
-
-        # self.train_generators = self._read_agent_data(
-        #     self.train_agent_name, True)
-        # self.test_generators = self._read_agent_data(
-        #     self.test_agent_name, False)
 
     def train_test_agent_split(self, test_agent_name):
         self.test_agent_index = self.all_agent_names.index(test_agent_name)
@@ -299,6 +287,7 @@ class Dataset(object):
             return [self.test_agent_name]
 
     def next_batch(self, is_train=True):
+        # start_time = time.time()
         tasks = self.sample_task(self.task_num, is_train)
 
         batch = []
@@ -306,4 +295,5 @@ class Dataset(object):
             data = self.retrieve_agent_batch(agent_name, is_train)
             batch.append(data)
 
+        # print(f"Time: {time.time() - start_time}")
         return batch, tasks

@@ -12,9 +12,11 @@ import gin
 from pprint import pprint
 
 from DataGenerator import DataGenerator
-from Dataset.Ganabi import Dataset
+from Dataset.PKL_Ganabi import Dataset as pkl_dataset
+from PKL_MAML import MAML as pkl_maml
 
-from maml import MAML
+from Dataset.NPZ_Ganabi import Dataset as npz_dataset
+from NPZ_MAML import MAML as npz_maml
 
 from TrainConfig import TrainConfig
 
@@ -34,14 +36,19 @@ def train_ganabi():
     config_file = './config/ganabi.config.gin'
     gin.parse_config_file(config_file)
     config_obj = TrainConfig()
-    # config = config_obj.get_config()
 
-    maml = MAML(config_obj)
+    data_type = config_obj.get("data_type")
+    if data_type == "npz":
+        maml = npz_maml(config_obj)
+        data_generator = npz_dataset(config_obj)
+    elif data_type == "pkl":
+        maml = pkl_maml(config_obj)
+        data_generator = pkl_dataset(config_obj)
+    else:
+        raise(BaseException, f"Unknow data type {data_type}")
+
     maml.save_gin_config(config_file)
-    # data_generator = DataGenerator(config_obj)
-    data_generator = Dataset(config_obj)
     maml.init_agent_metrics(data_generator.all_agent_names)
-
     maml.train_manager(data_generator)
 
 
