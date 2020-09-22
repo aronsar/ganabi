@@ -1,3 +1,7 @@
+# THIS REPOSITORY IS NOW OUT OF DATE
+
+Please see github.com/aronsar/hoad for an updated and refactored version, with additional experiments and documentation.
+
 # ganabi
 
 Because DeepMind wrote their Rainbow agents in Py 2.7 and tf 1.x, the data creation script, which interfaces with that code, uses Py 2.7 and tf 1.x. However, once the data is produced, we only use Py 3.6 and tf 2.0 for building and training our models.
